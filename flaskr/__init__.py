@@ -41,7 +41,7 @@ def create_app(test_config=None):
         pass
 
     # login
-    @app.route('/login', methods = ['POST'])
+    @app.route('/api/v1/login', methods = ['POST'])
     @cross_origin()
     def login():
         usersClass = Users()
@@ -59,7 +59,7 @@ def create_app(test_config=None):
             return response, 200
 
     # USERS
-    @app.route('/users', methods = ['POST', 'GET'])
+    @app.route('/api/v1/users', methods = ['POST', 'GET'])
     @cross_origin()
     def users():
         usersClass = Users()
