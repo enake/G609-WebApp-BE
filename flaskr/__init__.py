@@ -40,6 +40,8 @@ def create_app(test_config=None):
     except OSError:
         pass
 
+    #TODO: trebuie intors un token de autentificare care sa fie folosit la toate
+    # celelalte endointuri
     # login
     @app.route('/api/v1/login', methods = ['POST'])
     @cross_origin()
@@ -88,6 +90,19 @@ def create_app(test_config=None):
             response = format_response(users_list)
             return response, 200
 
+    #TODO:
+    #POST upload a file
+    #GET all files, o lista de fisiere
+    #@app.route('/api/v1/files', methods = ['POST', 'GET'])
+
+    #TODO:
+    #GET un fisier anume pentru visualizare
+    #@app.route('/api/v1/files/<id>', methods = ['GET'])
+
+    #TODO:
+    #GET detalii fiser: daca e ok, un status: citit, necitit, aprobat, neaprobat
+    #POST si sau UPDATE detalii fisier: se modifica statusurile fisierului
+    #@app.route('/api/v1/files/<id>/details', methods = ['GET', 'POST'])
 
     from . import db
     db.init_app(app)
