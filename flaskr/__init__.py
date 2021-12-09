@@ -3,6 +3,19 @@ import os
 from flask import Flask, request, jsonify
 from flask_cors import CORS, cross_origin
 from flaskr.db import get_db
+from flaskr.users_model import Users
+
+def format_response(data, error_message=""):
+    if error_message == "":
+        status = "ok"
+    else:
+        status = "error" 
+
+    return { 
+        "status": status, 
+        "message": error_message,
+        "data": data
+    }
 
 def create_app(test_config=None):
     # create and configure the app
@@ -27,33 +40,55 @@ def create_app(test_config=None):
     except OSError:
         pass
 
-    # a simple page that says hello
+    # login
     @app.route('/login', methods = ['POST'])
     @cross_origin()
     def login():
-        data = request.get_json()
-        username = data.get("username")
-        password = data.get("password")
-
-        if username is not None and password is not None:
-            db = get_db()
-            error = None
-            try:
-                check = db.execute(
-                    "SELECT * FROM users WHERE email =? AND password =?",
-                    (username, password),
-                ).fetchone()
-                if check is None:
-                    error = "Incorrect email or password"
-            except db.IntegrityError:
-                error = "Database error"
-
-            if error is None:
-                return {"response": "ok"}
+        usersClass = Users()
+        data = request.json
+        if data["email"] is not None and data["password"] is not None:
+            user_data = [
+                data["email"],
+                data["password"]
+            ]
+            user = usersClass.getUserByEmailPassword(user_data)
+            if user:
+                response = format_response(user)
             else:
-                return {"response": "error", "error": error}
+                response = format_response([], "Email or password invalid!")
+            return response, 200
 
-    
+    # USERS
+    @app.route('/users', methods = ['POST', 'GET'])
+    @cross_origin()
+    def users():
+        usersClass = Users()
+
+        if request.method == 'POST':
+            data = request.json
+            user = usersClass.getUserByEmail([data["email"]])
+            print (user)
+            if not user:
+                user_data = [
+                    data["email"],
+                    data["first_name"],
+                    data["last_name"],
+                    data["password"]
+                ]
+                users_list = usersClass.addUser(user_data)
+                response = format_response(users_list)
+                return response, 201
+            else:
+                response = format_response([],"Email already exists! Please login.")
+                return response, 200
+        
+        if request.method == "GET":
+            
+            users_list = usersClass.getUsers()
+            response = format_response(users_list)
+            return response, 200
+
+
     from . import db
     db.init_app(app)
 
