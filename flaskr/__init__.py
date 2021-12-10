@@ -1,9 +1,15 @@
 import os
+import jwt
+import datetime
 
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, request, make_response, render_template
 from flask_cors import CORS, cross_origin
 from flaskr.db import get_db
 from flaskr.users_model import Users
+from functools import wraps
+from os import listdir
+from os.path import isfile, join
+
 
 def format_response(data, error_message=""):
     if error_message == "":
@@ -40,9 +46,6 @@ def create_app(test_config=None):
     except OSError:
         pass
 
-    #TODO: trebuie intors un token de autentificare care sa fie folosit la toate
-    # celelalte endointuri
-    # login
     @app.route('/api/v1/login', methods = ['POST'])
     @cross_origin()
     def login():
@@ -89,15 +92,69 @@ def create_app(test_config=None):
             users_list = usersClass.getUsers()
             response = format_response(users_list)
             return response, 200
+    
+    #TODO: trebuie intors un token de autentificare care sa fie folosit la toate
+    # celelalte endointuri
+    # login
+    app.config['SECRET_KEY'] = 'thisisthesecretkey'
+
+    def token_required(f):
+        @wraps(f)
+        def decorated(*args, **kwargs):
+            token = request.args.get('token')
+
+            if not token:
+                return jsonify({'message' : 'Token is missing!'}), 403
+
+            try: 
+                data = jwt.decode(token, app.config['SECRET_KEY'])
+            except:
+                return jsonify({'message' : 'Token is invalid!'}), 403
+
+            return f(*args, **kwargs)
+
+        return decorated
+
+    @app.route('/unprotected')
+    def unprotected():
+        return jsonify({'message' : 'Anyone can view this!'})
+
+    @app.route('/protected')
+    @token_required
+    def protected():
+        return jsonify({'message' : 'This is only available for people with valid tokens.'})
+
+    @app.route('/loginToken')
+    def loginToken():
+        auth = request.authorization
+
+        if auth and auth.password == 'secret':
+            token = jwt.encode({'user' : auth.username, 'exp' : datetime.datetime.utcnow() + datetime.timedelta(seconds=15)}, app.config['SECRET_KEY'])
+            return jsonify({'token' : token.decode('UTF-8')})
+
+        return make_response('Could not verify!', 401, {'WWW-Authenticate' : 'Basic realm="Login Required"'})
 
     #TODO:
     #POST upload a file
     #GET all files, o lista de fisiere
-    #@app.route('/api/v1/files', methods = ['POST', 'GET'])
+    @app.route('/api/v1/files', methods = ['POST', 'GET'])
+    def upload():
+        if request.method == 'POST':
+            f = request.files['file']
+            f.save("uploaded_files/" + f.filename)
+            return "File uploaded successfully: " + str(f.content_length)
+        if request.method == 'GET':
+            onlyfiles = [f for f in listdir("uploaded_files/") if isfile(join("uploaded_files/", f))]
+
 
     #TODO:
     #GET un fisier anume pentru visualizare
-    #@app.route('/api/v1/files/<id>', methods = ['GET'])
+    @app.route('/api/v1/files/<id>', methods = ['GET'])
+    def display_file(filename):
+        file_path = os.path.join('UPLOAD_PATH', filename)
+        with open(file_path) as file:
+            content = file.read()
+        return render_template('display_file.html', content=content)
 
     #TODO:
     #GET detalii fiser: daca e ok, un status: citit, necitit, aprobat, neaprobat
