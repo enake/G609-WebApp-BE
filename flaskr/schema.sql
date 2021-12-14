@@ -1,5 +1,5 @@
+-- database
 DROP TABLE IF EXISTS users;
-
 CREATE TABLE users (
     user_id INTEGER PRIMARY KEY,
 	first_name TEXT NOT NULL,
@@ -17,4 +17,12 @@ CREATE TABLE token (
 	token TEXT NOT NULL,
 	gen_date TEXT NOT NULL,
 	last_access TEXT NOT NULL
+);
+
+DROP TABLE IF EXISTS files;
+CREATE TABLE files (
+	file_id INTEGER PRIMARY KEY,
+	file_name TEXT NOT NULL,
+	user_id INTEGER,
+	status TEXT DEFAULT "new"
 );

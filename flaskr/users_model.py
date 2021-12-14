@@ -46,13 +46,13 @@ class Users:
         return self.__query(query, user_data)
 
     def validateToken (self, token):
-        query = "SELECT * FROM token WHERE token = ? AND DATETIME(last_access, '+2 hours') > DATETIME('now');"
+        query = "SELECT user_id FROM token WHERE token = ? AND DATETIME(last_access, '+2 hours') > DATETIME('now');"
         query_data = [token]
         result = self.__query(query, query_data)
         if (result):
-            query = "UPDATE token SET last_access DATETIME('now') WHERE token = ? ;"
+            query = "UPDATE token SET last_access = DATETIME('now') WHERE token = ? ;"
             self.__query(query, query_data)
-            return True
+            return result
         return False
 
     def getToken(self, user_id):

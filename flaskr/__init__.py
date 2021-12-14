@@ -4,6 +4,8 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS, cross_origin
 from flaskr.db import get_db
 from flaskr.users_model import Users
+from flaskr.files_model import Files
+from pathlib import Path
 
 def format_response(data, error_message=""):
     if error_message == "":
@@ -97,7 +99,7 @@ def create_app(test_config=None):
             if (not validateAuth(request, usersClass)):
                 response = format_response([],"Not Authorized!")
                 return response, 401
-                
+
             users_list = usersClass.getUsers()
             response = format_response(users_list)
             return response, 200
@@ -105,7 +107,33 @@ def create_app(test_config=None):
     #TODO:
     #POST upload a file
     #GET all files, o lista de fisiere
-    #@app.route('/api/v1/files', methods = ['POST', 'GET'])
+    @app.route('/api/v1/files', methods = ['POST', 'GET'])
+    def upload():
+        usersClass = Users()
+        filesClass = Files()
+        userList = validateAuth(request, usersClass)
+        
+        if (not userList):
+                response = format_response([],"Not Authorized!")
+                return response, 401
+        
+        user_id = userList[0][0]
+
+        if request.method == 'POST':
+            f = request.files['file']
+            file_id = filesClass.addFile([user_id, f.filename])
+            file_extension = f.filename.rsplit('.', 1)[1].lower()
+            Path(f"documents/{user_id}").mkdir(parents=True, exist_ok=True)
+            f.save(f"documents/{user_id}/{file_id}.{file_extension}")
+            return_data = {
+                "file_id": file_id,
+                "user_id": user_id,
+                "file_name": f.filename
+            }
+            return format_response(return_data)
+            
+        if request.method == 'GET':
+            return format_response(filesClass.getFiles(user_id)), 200
 
     #TODO:
     #GET un fisier anume pentru visualizare
