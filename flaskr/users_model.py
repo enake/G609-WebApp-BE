@@ -1,4 +1,5 @@
 from flaskr.db import get_db
+import uuid
 
 class Users:
     def __init__(self):
@@ -11,11 +12,15 @@ class Users:
             self.db.commit()
             return result
         except Exception as e:
+            print (e)
             return e
 
-    def __query_to_dict(self, query, data):
+    def __query_to_dict(self, query, data=None):
         cursor = self.db.cursor()
-        cursor.execute(query, data)
+        if (data):
+            cursor.execute(query, data)
+        else:
+            cursor.execute(query)
         self.db.commit()
         desc = cursor.description
         column_names = [col[0] for col in desc]
@@ -39,4 +44,21 @@ class Users:
         query = """INSERT INTO users (email, first_name, last_name, password)
     VALUES (?, ?, ?, ?);"""
         return self.__query(query, user_data)
+
+    def validateToken (self, token):
+        query = "SELECT * FROM token WHERE token = ? AND DATETIME(last_access, '+2 hours') > DATETIME('now');"
+        query_data = [token]
+        result = self.__query(query, query_data)
+        if (result):
+            query = "UPDATE token SET last_access DATETIME('now') WHERE token = ? ;"
+            self.__query(query, query_data)
+            return True
+        return False
+
+    def getToken(self, user_id):
+        token = str(uuid.uuid4())
+        query_data = [user_id, token]
+        query = "INSERT INTO token (user_id, token, last_access, gen_date) VALUES (?, ?, DATETIME('now'), DATETIME('now'));" 
+        self.__query(query, query_data)
+        return token
 

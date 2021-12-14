@@ -40,6 +40,11 @@ def create_app(test_config=None):
     except OSError:
         pass
 
+    def validateAuth(request, usersObj):
+        headers = request.headers
+        authToken = headers.get("Authorization")
+        return usersObj.validateToken(authToken)
+
     #TODO: trebuie intors un token de autentificare care sa fie folosit la toate
     # celelalte endointuri
     # login
@@ -55,6 +60,10 @@ def create_app(test_config=None):
             ]
             user = usersClass.getUserByEmailPassword(user_data)
             if user:
+                user = user[0]
+                del user['password']
+                token = usersClass.getToken(user['user_id'])
+                user['token'] = token
                 response = format_response(user)
             else:
                 response = format_response([], "Email or password invalid!")
@@ -85,7 +94,10 @@ def create_app(test_config=None):
                 return response, 200
         
         if request.method == "GET":
-            
+            if (not validateAuth(request, usersClass)):
+                response = format_response([],"Not Authorized!")
+                return response, 401
+                
             users_list = usersClass.getUsers()
             response = format_response(users_list)
             return response, 200
