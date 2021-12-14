@@ -1,6 +1,6 @@
 import os
 
-from flask import Flask, request, jsonify
+from flask import Flask, request, send_file
 from flask_cors import CORS, cross_origin
 from flaskr.db import get_db
 from flaskr.users_model import Users
@@ -137,7 +137,28 @@ def create_app(test_config=None):
 
     #TODO:
     #GET un fisier anume pentru visualizare
-    #@app.route('/api/v1/files/<id>', methods = ['GET'])
+    @app.route('/api/v1/files/<file_id>', methods = ['GET'])
+    def getFile(file_id):
+        usersClass = Users()
+        filesClass = Files()
+        userList = validateAuth(request, usersClass)
+        
+        if (not userList):
+                response = format_response([],"Not Authorized!")
+                return response, 401
+        
+        if request.method == 'GET':
+            file_details = filesClass.getFileDetails(file_id)
+            if (not file_details):
+                response = format_response([], "Not Found!")
+                return response, 404
+            
+            file_details = file_details[0]
+            file_id = file_details["file_id"]
+            file_user_id = file_details["user_id"]
+            file_extension = file_details['file_name'].rsplit('.', 1)[1].lower()
+
+            return send_file(f"../documents/{file_user_id}/{file_id}.{file_extension}", as_attachment=False)
 
     #TODO:
     #GET detalii fiser: daca e ok, un status: citit, necitit, aprobat, neaprobat

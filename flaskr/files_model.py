@@ -38,3 +38,7 @@ class Files:
     def getFiles(self, user_id):
         query = f"SELECT * FROM files WHERE user_id = ?"
         return self.__query_to_dict(query, [user_id])
+
+    def getFileDetails(self, file_id):
+        query = f"SELECT * FROM files WHERE file_id = ?"
+        return self.__query_to_dict(query, [file_id])
