@@ -27,7 +27,7 @@ def create_app(test_config=None):
         DATABASE=os.path.join(app.instance_path, 'flaskr.sqlite'),
     )
 
-    cors = CORS(app)
+    cors = CORS(app, resources={r"/api/*": {"origins": "*"}})
 
     if test_config is None:
         # load the instance config, if it exists, when not testing
@@ -51,7 +51,6 @@ def create_app(test_config=None):
     # celelalte endointuri
     # login
     @app.route('/api/v1/login', methods = ['POST'])
-    @cross_origin()
     def login():
         usersClass = Users()
         data = request.json
@@ -108,6 +107,7 @@ def create_app(test_config=None):
     #POST upload a file
     #GET all files, o lista de fisiere
     @app.route('/api/v1/files', methods = ['POST', 'GET'])
+    @cross_origin()
     def upload():
         usersClass = Users()
         filesClass = Files()
@@ -138,6 +138,7 @@ def create_app(test_config=None):
     #TODO:
     #GET un fisier anume pentru visualizare
     @app.route('/api/v1/files/<file_id>', methods = ['GET'])
+    @cross_origin()
     def getFile(file_id):
         usersClass = Users()
         filesClass = Files()
