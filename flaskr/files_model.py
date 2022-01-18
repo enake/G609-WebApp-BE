@@ -42,3 +42,7 @@ class Files:
     def getFileDetails(self, file_id):
         query = f"SELECT * FROM files WHERE file_id = ?"
         return self.__query_to_dict(query, [file_id])
+    
+    def updateDetails(self, status):
+        query = f"UPDATE files SET status = ? WHERE file_id = ?"
+        return self.__query(query, status)

@@ -164,7 +164,22 @@ def create_app(test_config=None):
     #TODO:
     #GET detalii fiser: daca e ok, un status: citit, necitit, aprobat, neaprobat
     #POST si sau UPDATE detalii fisier: se modifica statusurile fisierului
-    #@app.route('/api/v1/files/<id>/details', methods = ['GET', 'POST'])
+    @app.route('/api/v1/files/<file_id>/details', methods = ['POST'])
+    def fileDetails(file_id):
+        usersClass = Users()
+        filesClass = Files()
+        userList = validateAuth(request, usersClass)
+
+        if (not userList):
+                response = format_response([],"Not Authorized!")
+                return response, 401
+        
+        if request.method == "POST":
+            data = request.json
+            filesClass.updateDetails([data['status'], file_id])
+
+            response = format_response([])
+            return response, 201
 
     from . import db
     db.init_app(app)
